@@ -1,53 +1,81 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdbool.h>
+
+#define MAX_THREADS 5
+#define MIN_SLEEP_TIME 1
+#define MAX_SLEEP_TIME 10
 
 typedef struct {
-    int index;
-    int sleep_time;
-} ThreadData;
+    int id;
+    int duration;
+} ThreadParams;
 
-void* thread_task(void* arg) {
-    ThreadData* data = (ThreadData*)arg;
-    printf("Поток %d начал работу (будет работать %d секунд)\n", data->index + 1, data->sleep_time);
-    sleep(data->sleep_time);
-    printf("Поток %d завершил работу через %d секунд\n", data->index + 1, data->sleep_time);
-    free(arg);
+void* thread_function(void* arg) {
+    ThreadParams* params = (ThreadParams*)arg;
+    printf("[Поток %d] Запущен, выполнение %d сек...\n", params->id, params->duration);
+    
+    sleep(params->duration);
+    
+    printf("[Поток %d] Завершен через %d сек\n", params->id, params->duration);
+    free(params);
     return NULL;
 }
 
-int main() {
-    char choice;
-    do {
-        pthread_t threads[5];
-        int sleep_times[5];
-        
-        // Ввод времени для каждого потока
-        for (int i = 0; i < 5; i++) {
-            printf("Введите время для потока %d: ", i + 1);
-            scanf("%d", &sleep_times[i]);
-        }
-        
-        // Создание потоков
-        for (int i = 0; i < 5; i++) {
-            ThreadData* data = malloc(sizeof(ThreadData));
-            data->index = i;
-            data->sleep_time = sleep_times[i];
-            pthread_create(&threads[i], NULL, thread_task, data);
-        }
-        
-        
-        // Ожидание завершения всех потоков
-        for (int i = 0; i < 5; i++) {
-            pthread_join(threads[i], NULL);
-        }
-        
-        printf("Все потоки завершены!\n\n");
-        printf("Нажмите 'r' для повтора или 'x' для выхода: ");
-        scanf(" %c", &choice);
-        
-    } while (choice != 'x');
+bool validate_input(int time) {
+    return time >= MIN_SLEEP_TIME && time <= MAX_SLEEP_TIME;
+}
+
+void run_threads() {
+    pthread_t threads[MAX_THREADS];
+    int sleep_times[MAX_THREADS];
     
+    for (int i = 0; i < MAX_THREADS; i++) {
+        do {
+            printf("Введите время выполнения для потока %d (%d-%d сек): ", 
+                  i+1, MIN_SLEEP_TIME, MAX_SLEEP_TIME);
+            scanf("%d", &sleep_times[i]);
+            
+            if (!validate_input(sleep_times[i])) {
+                printf("Ошибка! Введите значение от %d до %d\n", 
+                      MIN_SLEEP_TIME, MAX_SLEEP_TIME);
+            }
+        } while (!validate_input(sleep_times[i]));
+    }
+    
+    for (int i = 0; i < MAX_THREADS; i++) {
+        ThreadParams* params = malloc(sizeof(ThreadParams));
+        params->id = i+1;
+        params->duration = sleep_times[i];
+        
+        if (pthread_create(&threads[i], NULL, thread_function, params) != 0) {
+            perror("Ошибка создания потока");
+            free(params);
+        }
+    }
+    
+    for (int i = 0; i < MAX_THREADS; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    printf("\nВсе потоки успешно завершили работу!\n\n");
+}
+
+int main() {
+    char command;
+    
+    do {
+        run_threads();
+        
+        printf("Введите 'r' для повторного запуска или 'q' для выхода: ");
+        scanf(" %c", &command);
+        
+    } while (command == 'r' || command == 'R');
+    
+    printf("Программа завершена.\n");
     return 0;
 }
