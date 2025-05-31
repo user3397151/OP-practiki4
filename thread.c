@@ -60,7 +60,7 @@ int main() {
     do {
         run_threads();
         
-        printf("Введите 'r' для повторного запуска или 'q' для выхода: ");
+        printf("Введите 'r' для повторного запуска или 'x' для выхода: ");
         scanf(" %c", &command);
         
     } while (command == 'r' || command == 'R');
