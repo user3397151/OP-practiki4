@@ -1,14 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <stdbool.h>
 
 #define MAX_THREADS 5
-#define MIN_SLEEP_TIME 1
-#define MAX_SLEEP_TIME 10
 
 typedef struct {
     int id;
@@ -26,25 +22,18 @@ void* thread_function(void* arg) {
     return NULL;
 }
 
-bool validate_input(int time) {
-    return time >= MIN_SLEEP_TIME && time <= MAX_SLEEP_TIME;
-}
-
 void run_threads() {
     pthread_t threads[MAX_THREADS];
     int sleep_times[MAX_THREADS];
     
     for (int i = 0; i < MAX_THREADS; i++) {
-        do {
-            printf("Введите время выполнения для потока %d (%d-%d сек): ", 
-                  i+1, MIN_SLEEP_TIME, MAX_SLEEP_TIME);
-            scanf("%d", &sleep_times[i]);
-            
-            if (!validate_input(sleep_times[i])) {
-                printf("Ошибка! Введите значение от %d до %d\n", 
-                      MIN_SLEEP_TIME, MAX_SLEEP_TIME);
-            }
-        } while (!validate_input(sleep_times[i]));
+        printf("Введите время выполнения для потока %d: ", i+1);
+        scanf("%d", &sleep_times[i]);
+        
+        if (sleep_times[i] < 0) {
+            printf("Время не может быть отрицательным, установлено 0\n");
+            sleep_times[i] = 0;
+        }
     }
     
     for (int i = 0; i < MAX_THREADS; i++) {
